@@ -22,7 +22,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS diapers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            type TEXT NOT NULL CHECK(type IN ('pee', 'poop', 'both'))
+            type TEXT NOT NULL CHECK(type IN ('pee', 'poop', 'both', 'blowout'))
         )
     ''')
     db.execute('''
@@ -44,7 +44,7 @@ def diapers():
         data = request.json
         diaper_type = data.get('type')
         
-        if diaper_type not in ['pee', 'poop', 'both']:
+        if diaper_type not in ['pee', 'poop', 'both', 'blowout']:
             return jsonify({'error': 'Invalid diaper type'}), 400
         
         cursor = db.execute(
@@ -82,7 +82,7 @@ def diaper_detail(diaper_id):
         diaper_type = data.get('type')
         timestamp = data.get('timestamp')
         
-        if diaper_type and diaper_type not in ['pee', 'poop', 'both']:
+        if diaper_type and diaper_type not in ['pee', 'poop', 'both', 'blowout']:
             return jsonify({'error': 'Invalid diaper type'}), 400
         
         # Build update query dynamically

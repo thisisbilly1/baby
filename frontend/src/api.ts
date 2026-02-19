@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 export interface Diaper {
   id: number;
   timestamp: string;
-  type: 'pee' | 'poop' | 'both';
+  type: 'pee' | 'poop' | 'both' | 'blowout';
 }
 
 export interface Feeding {
@@ -13,7 +13,7 @@ export interface Feeding {
 }
 
 // Diaper API
-export async function createDiaper(type: 'pee' | 'poop' | 'both'): Promise<Diaper> {
+export async function createDiaper(type: 'pee' | 'poop' | 'both' | 'blowout'): Promise<Diaper> {
   const response = await fetch(`${API_BASE}/diapers`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -36,7 +36,7 @@ export async function deleteDiaper(id: number): Promise<void> {
   if (!response.ok) throw new Error('Failed to delete diaper');
 }
 
-export async function updateDiaper(id: number, type: 'pee' | 'poop' | 'both', timestamp?: string): Promise<Diaper> {
+export async function updateDiaper(id: number, type: 'pee' | 'poop' | 'both' | 'blowout', timestamp?: string): Promise<Diaper> {
   const body: any = { type };
   if (timestamp) body.timestamp = timestamp;
   
