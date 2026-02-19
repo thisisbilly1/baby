@@ -115,378 +115,173 @@ const allEvents = computed(() => {
 </script>
 
 <template>
-  <section class="events">
-    <h2>Recent Activity</h2>
-    
-    <div v-if="loading" class="loading">Loading...</div>
-    
-    <div v-else-if="allEvents.length === 0" class="empty">
-      No activities recorded yet
-    </div>
+  <v-card elevation="8">
+    <v-card-title class="text-h5">Recent Activity</v-card-title>
+    <v-card-text>
+      <v-progress-circular 
+        v-if="loading" 
+        indeterminate 
+        color="primary"
+        class="d-block mx-auto"
+      />
+      
+      <v-alert v-else-if="allEvents.length === 0" type="info" variant="tonal">
+        No activities recorded yet
+      </v-alert>
 
-    <div v-else class="event-list">
-      <div 
-        v-for="event in allEvents" 
-        :key="event.id"
-        class="event-item"
-        :class="event.type"
-      >
-        <div class="event-icon">
-          <span v-if="event.type === 'diaper'">
-            {{ event.data.type === 'pee' ? '💧' : event.data.type === 'poop' ? '💩' : event.data.type === 'blowout' ? '💥' : '🦆' }}
-          </span>
-          <span v-else>🍼</span>
-        </div>
-        
-        <div class="event-content">
-          <div class="event-title">
+      <v-list v-else lines="two">
+        <v-list-item
+          v-for="event in allEvents"
+          :key="event.id"
+          class="mb-2"
+        >
+          <template v-slot:prepend>
+            <v-avatar size="48" color="grey-lighten-3">
+              <span class="text-h5">
+                {{ event.type === 'diaper' 
+                  ? (event.data.type === 'pee' ? '💧' : event.data.type === 'poop' ? '💩' : event.data.type === 'blowout' ? '💥' : '🦆')
+                  : '🍼' 
+                }}
+              </span>
+            </v-avatar>
+          </template>
+
+          <v-list-item-title class="text-capitalize">
             <span v-if="event.type === 'diaper'">
               Diaper - {{ event.data.type }}
             </span>
             <span v-else>
               Feeding - {{ formatDuration(event.data.start_time, event.data.end_time) }}
             </span>
-          </div>
-          <div class="event-time">
-            {{ formatTime(event.timestamp) }}
-          </div>
-        </div>
+          </v-list-item-title>
 
-        <div class="event-actions">
-          <button 
-            class="edit-btn"
-            @click="startEdit(event.type, event.data)"
-            title="Edit"
-          >
-            ✏️
-          </button>
-          <button 
-            class="delete-btn"
-            @click="handleDelete(event.type, event.data.id)"
-            title="Delete"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-    </div>
+          <v-list-item-subtitle>
+            {{ formatTime(event.timestamp) }}
+          </v-list-item-subtitle>
+
+          <template v-slot:append>
+            <v-btn
+              icon="mdi-pencil"
+              variant="text"
+              size="small"
+              @click="startEdit(event.type, event.data)"
+            />
+            <v-btn
+              icon="mdi-delete"
+              variant="text"
+              size="small"
+              color="error"
+              @click="handleDelete(event.type, event.data.id)"
+            />
+          </template>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
 
     <!-- Edit Modal -->
-    <div v-if="showEditModal && editingEvent" class="modal-overlay" @click="cancelEdit">
-      <div class="modal" @click.stop>
-        <h2>Edit {{ editingEvent.type === 'diaper' ? 'Diaper' : 'Feeding' }}</h2>
-        
-        <!-- Edit Diaper -->
-        <div v-if="editingEvent.type === 'diaper'" class="edit-form">
-          <div class="form-group">
-            <label>Type:</label>
-            <div class="modal-actions">
-              <button 
-                class="modal-btn pee-btn"
-                :class="{ selected: editingEvent.data.type === 'pee' }"
-                @click="editingEvent.data.type = 'pee'"
-              >
-                💧 Pee
-              </button>
-              <button 
-                class="modal-btn poop-btn"
-                :class="{ selected: editingEvent.data.type === 'poop' }"
-                @click="editingEvent.data.type = 'poop'"
-              >
-                💩 Poop
-              </button>
-              <button 
-                class="modal-btn both-btn"
-                :class="{ selected: editingEvent.data.type === 'both' }"
-                @click="editingEvent.data.type = 'both'"
-              >
-                🦆 Both
-              </button>
-              <button 
-                class="modal-btn blowout-btn"
-                :class="{ selected: editingEvent.data.type === 'blowout' }"
-                @click="editingEvent.data.type = 'blowout'"
-              >
-                💥 Blowout
-              </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Time:</label>
-            <input 
-              type="datetime-local" 
+    <v-dialog v-model="showEditModal" max-width="400">
+      <v-card v-if="editingEvent">
+        <v-card-title class="text-h5 text-center">
+          Edit {{ editingEvent.type === 'diaper' ? 'Diaper' : 'Feeding' }}
+        </v-card-title>
+        <v-card-text>
+          <!-- Edit Diaper -->
+          <div v-if="editingEvent.type === 'diaper'">
+            <v-label class="mb-2 d-block">Type:</v-label>
+            <v-row dense class="mb-4">
+              <v-col cols="6">
+                <v-btn
+                  block
+                  class="pee-btn"
+                  :variant="editingEvent.data.type === 'pee' ? 'flat' : 'outlined'"
+                  @click="editingEvent.data.type = 'pee'"
+                >
+                  💧 Pee
+                </v-btn>
+              </v-col>
+              <v-col cols="6">
+                <v-btn
+                  block
+                  class="poop-btn"
+                  :variant="editingEvent.data.type === 'poop' ? 'flat' : 'outlined'"
+                  @click="editingEvent.data.type = 'poop'"
+                >
+                  💩 Poop
+                </v-btn>
+              </v-col>
+              <v-col cols="6">
+                <v-btn
+                  block
+                  class="both-btn"
+                  :variant="editingEvent.data.type === 'both' ? 'flat' : 'outlined'"
+                  @click="editingEvent.data.type = 'both'"
+                >
+                  🦆 Both
+                </v-btn>
+              </v-col>
+              <v-col cols="6">
+                <v-btn
+                  block
+                  class="blowout-btn"
+                  :variant="editingEvent.data.type === 'blowout' ? 'flat' : 'outlined'"
+                  @click="editingEvent.data.type = 'blowout'"
+                >
+                  💥 Blowout
+                </v-btn>
+              </v-col>
+            </v-row>
+            <v-text-field
               v-model="editingEvent.data.timestamp"
-              class="time-input"
+              label="Time"
+              type="datetime-local"
+              variant="outlined"
             />
           </div>
-        </div>
-        
-        <!-- Edit Feeding -->
-        <div v-else class="edit-form">
-          <div class="form-group">
-            <label>Start Time:</label>
-            <input 
-              type="datetime-local" 
+          
+          <!-- Edit Feeding -->
+          <div v-else>
+            <v-text-field
               v-model="editingEvent.data.start_time"
-              class="time-input"
+              label="Start Time"
+              type="datetime-local"
+              variant="outlined"
+              class="mb-4"
             />
-          </div>
-          <div class="form-group">
-            <label>End Time:</label>
-            <input 
-              type="datetime-local" 
+            <v-text-field
               v-model="editingEvent.data.end_time"
-              class="time-input"
+              label="End Time"
+              type="datetime-local"
+              variant="outlined"
             />
           </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="save-btn" @click="saveEdit">Save</button>
-          <button class="cancel-btn" @click="cancelEdit">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </section>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="success" @click="saveEdit">Save</v-btn>
+          <v-btn variant="text" @click="cancelEdit">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-card>
 </template>
 
 <style scoped>
-.events {
-  background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+.pee-btn {
+  background: #74b9ff !important;
+  color: white !important;
 }
 
-.events h2 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-  font-size: 1.5rem;
+.poop-btn {
+  background: #a29bfe !important;
+  color: white !important;
 }
 
-.loading, .empty {
-  text-align: center;
-  color: #666;
-  padding: 2rem;
+.both-btn {
+  background: #fd79a8 !important;
+  color: white !important;
 }
 
-.event-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.event-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
-  transition: background 0.2s ease;
-}
-
-.event-item:hover {
-  background: #e9ecef;
-}
-
-.event-icon {
-  font-size: 2rem;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 0.5rem;
-}
-
-.event-content {
-  flex: 1;
-}
-
-.event-title {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.25rem;
-  text-transform: capitalize;
-}
-
-.event-time {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.event-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.edit-btn {
-  background: #74b9ff;
-  color: white;
-  border: none;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-
-.edit-btn:hover {
-  background: #0984e3;
-}
-
-.delete-btn {
-  background: #ff7675;
-  color: white;
-  border: none;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-
-.delete-btn:hover {
-  background: #d63031;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  max-width: 400px;
-  width: 100%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.modal h2 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-  text-align: center;
-}
-
-.modal-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.modal-btn {
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.pee-btn { background: #74b9ff; }
-.poop-btn { background: #a29bfe; }
-.both-btn { background: #fd79a8; }
-.blowout-btn { background: #ff6348; }
-
-.cancel-btn {
-  background: #dfe6e9;
-  color: #2d3436;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  cursor: pointer;
-  width: 100%;
-}
-
-/* Edit Modal Styles */
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.time-input {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: border-color 0.2s ease;
-}
-
-.time-input:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-}
-
-.save-btn {
-  flex: 1;
-  background: #00b894;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.save-btn:hover {
-  background: #00a383;
-}
-
-.modal-btn.selected {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-  transform: scale(1.05);
+.blowout-btn {
+  background: #ff6348 !important;
+  color: white !important;
 }
 </style>
