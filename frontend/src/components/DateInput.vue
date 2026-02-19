@@ -116,8 +116,8 @@ dayjs.extend(updateLocale);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
-const startDate = defineModel('startDate');
-const endDate = defineModel('endDate');
+const startDate = defineModel<Date | string>('startDate');
+const endDate = defineModel<Date | string>('endDate');
 
 const props = defineProps({
   options: {
@@ -125,16 +125,16 @@ const props = defineProps({
   },
   customOptions: {
     type: Array,
-    validator: (val) => {
+    validator: (val: any) => {
       return (
         Array.isArray(val) &&
         val.every(
-          (opt) =>
+          (opt: any) =>
             typeof opt.title === 'string' &&
             typeof opt.key === 'string' &&
             Array.isArray(opt.value) &&
             opt.value.length === 2 &&
-            opt.value.every((d) => typeof d === 'string'),
+            opt.value.every((d: any) => typeof d === 'string'),
         )
       );
     },
@@ -160,33 +160,42 @@ const { options, customOptions, max, min, defaultSelected, disableCustom } =
 const open = ref(false);
 const showCustom = ref(false);
 const showCustomTop = ref(false);
-const selectedItem = ref();
-const selectedDateKey = defineModel('selectedDateKey');
-const customSelectedDate = ref(null);
+const selectedItem = ref<any>();
+const selectedDateKey = defineModel<string>('selectedDateKey');
+const customSelectedDate = ref<Date[] | null>(null);
 const isCustomSelected = ref(false);
 
 const maxString = computed(() => {
-  if (!max.value) return null;
+  if (!max?.value) return null;
   return dayjs(max.value).format('YYYY-MM-DD');
 });
 
 const minString = computed(() => {
-  if (!min.value) return null;
+  if (!min?.value) return null;
   return dayjs(min.value).format('YYYY-MM-DD');
 });
 
-const dateOptions = computed(() => {
-  const maxObj = max.value ? dayjs(max.value) : dayjs().add(3, 'month');
-  const minObj = min.value ? dayjs(min.value) : dayjs('1900-01-01');
+interface DateOption {
+  title: string;
+  key: string;
+  value: string[];
+  weekRange?: boolean;
+  monthRange?: boolean;
+  isCustom?: boolean;
+}
+
+const dateOptions = computed<DateOption[]>(() => {
+  const maxObj = max?.value ? dayjs(max.value) : dayjs().add(3, 'month');
+  const minObj = min?.value ? dayjs(min.value) : dayjs('1900-01-01');
   const today = dayjs();
   const yesterday = dayjs().subtract(1, 'day');
   const tomorrow = dayjs().add(1, 'day');
 
-  const all = [...customOptions.value];
+  const all: DateOption[] = [...(customOptions.value || [])] as DateOption[];
 
   // Yesterday - show if max is yesterday or later AND min is yesterday or earlier
   if (
-    (!options.value || options.value.includes('yesterday')) &&
+    (!options?.value || options.value.includes('yesterday')) &&
     maxObj.isSameOrAfter(yesterday, 'day') &&
     minObj.isSameOrBefore(yesterday, 'day')
   ) {
@@ -199,7 +208,7 @@ const dateOptions = computed(() => {
 
   // Today - show if max is today or later AND min is today or earlier
   if (
-    (!options.value || options.value.includes('today')) &&
+    (!options?.value || options.value.includes('today')) &&
     maxObj.isSameOrAfter(today, 'day') &&
     minObj.isSameOrBefore(today, 'day')
   ) {
@@ -212,7 +221,7 @@ const dateOptions = computed(() => {
 
   // Tomorrow - show if max is tomorrow or later AND min is tomorrow or earlier
   if (
-    (!options.value || options.value.includes('tomorrow')) &&
+    (!options?.value || options.value.includes('tomorrow')) &&
     maxObj.isSameOrAfter(tomorrow, 'day') &&
     minObj.isSameOrBefore(tomorrow, 'day')
   ) {
@@ -224,7 +233,7 @@ const dateOptions = computed(() => {
   }
 
   // WTD - Week to Date, but end at max instead of today, start at min if min > weekStart
-  if (!options.value || options.value.includes('wtd')) {
+  if (!options?.value || options.value.includes('wtd')) {
     let weekStart = dayjs().startOf('week');
     if (minObj.isAfter(weekStart, 'day')) {
       weekStart = minObj;
@@ -246,7 +255,7 @@ const dateOptions = computed(() => {
   }
 
   // MTD - Month to Date, but end at max instead of today, start at min if min > monthStart
-  if (!options.value || options.value.includes('mtd')) {
+  if (!options?.value || options.value.includes('mtd')) {
     let monthStart = dayjs().startOf('month');
     if (minObj.isAfter(monthStart, 'day')) {
       monthStart = minObj;
@@ -268,7 +277,7 @@ const dateOptions = computed(() => {
   }
 
   // trailing 7 days
-  if (!options.value || options.value.includes('last7')) {
+  if (!options?.value || options.value.includes('last7')) {
     const last7Start = today.subtract(6, 'day');
     if (
       last7Start.isSameOrBefore(maxObj, 'day') &&
@@ -283,7 +292,7 @@ const dateOptions = computed(() => {
   }
 
   // trailing 30 days
-  if (!options.value || options.value.includes('last30')) {
+  if (!options?.value || options.value.includes('last30')) {
     const last30Start = today.subtract(29, 'day');
     if (
       last30Start.isSameOrBefore(maxObj, 'day') &&
@@ -300,12 +309,12 @@ const dateOptions = computed(() => {
   return all;
 });
 
-function isSelected(item) {
+function isSelected(item: any) {
   if (isCustomSelected.value) return false;
   return selectedItem.value?.key === item.key;
 }
 
-function toggleItem(item) {
+function toggleItem(item: any) {
   if (item.isCustom) {
     showCustom.value = !showCustom.value;
     return;
@@ -324,7 +333,7 @@ function toggleItem(item) {
 }
 
 watch(selectedDateKey, (newKey) => {
-  const found = dateOptions.value.find((opt) => opt.key === newKey);
+  const found = dateOptions.value.find((opt: any) => opt.key === newKey) as any;
   if (found) {
     selectedItem.value = found;
     startDate.value = dayjs(found.value[0]).startOf('day').toDate();
@@ -335,6 +344,7 @@ watch(selectedDateKey, (newKey) => {
 });
 
 function selectCustomDate() {
+  if (!customSelectedDate.value) return;
   startDate.value = dayjs(customSelectedDate.value[0]).startOf('day').toDate();
   endDate.value = dayjs(
     customSelectedDate.value[customSelectedDate.value.length - 1],
@@ -353,8 +363,8 @@ const labelText = computed(() => {
     text = selectedItem.value?.title ? `${selectedItem.value?.title} - ` : '';
   // const formattedStart = dayjs(startDate.value).format();
   // const formattedEnd = dayjs(endDate.value).format();
-  const formattedStart = new Date(startDate.value).toLocaleDateString();
-  const formattedEnd = new Date(endDate.value).toLocaleDateString();
+  const formattedStart = new Date(startDate.value as any).toLocaleDateString();
+  const formattedEnd = new Date(endDate.value as any).toLocaleDateString();
   if (formattedStart === formattedEnd) {
     return (text += formattedStart);
   } else {
@@ -366,16 +376,16 @@ const labelText = computed(() => {
 });
 
 onMounted(() => {
-  if (defaultSelected.value) {
+  if (defaultSelected?.value) {
     selectedItem.value =
-      dateOptions.value.find((opt) => opt.key === defaultSelected.value) ||
+      dateOptions.value.find((opt: any) => opt.key === defaultSelected.value) ||
       dateOptions.value[0];
   } else if (startDate.value && endDate.value) {
     selectedItem.value =
       dateOptions.value.find(
-        (opt) =>
-          dayjs(opt.value[0]).isSame(startDate.value, 'day') &&
-          dayjs(opt.value[1]).isSame(endDate.value, 'day'),
+        (opt: any) =>
+          dayjs(opt.value[0]).isSame(startDate.value as any, 'day') &&
+          dayjs(opt.value[1]).isSame(endDate.value as any, 'day'),
       ) || dateOptions.value[0];
   } else {
     if (!disableCustom.value) {
@@ -391,10 +401,10 @@ onMounted(() => {
   }
 });
 
-function setCustomDate(start, end) {
+function setCustomDate(start: any, end: any) {
   startDate.value = dayjs(start).startOf('day').toDate();
   endDate.value = dayjs(end).endOf('day').toDate();
-  const arr = [];
+  const arr: Date[] = [];
   arr.push(new Date(start));
   // push each date in between
   let current = dayjs(start).add(1, 'day');
@@ -406,16 +416,16 @@ function setCustomDate(start, end) {
   customSelectedDate.value = arr;
 }
 
-function adjustDateRange(direction) {
+function adjustDateRange(direction: number) {
   let newStart, newEnd;
   const operation = direction > 0 ? 'add' : 'subtract';
   const amount = Math.abs(direction);
 
   if (selectedItem.value?.monthRange) {
-    newStart = dayjs(startDate.value)
+    newStart = dayjs(startDate.value as any)
       [operation](amount, 'month')
       .startOf('month');
-    newEnd = dayjs(startDate.value)[operation](amount, 'month').endOf('month');
+    newEnd = dayjs(startDate.value as any)[operation](amount, 'month').endOf('month');
     startDate.value = newStart.startOf('day').toDate();
     endDate.value = newEnd.endOf('day').toDate();
     selectedItem.value = {
@@ -423,10 +433,10 @@ function adjustDateRange(direction) {
       value: [newStart.format('YYYY-MM-DD'), newEnd.format('YYYY-MM-DD')],
     };
   } else if (selectedItem.value?.weekRange) {
-    newStart = dayjs(startDate.value)
+    newStart = dayjs(startDate.value as any)
       [operation](amount, 'week')
       .startOf('week');
-    newEnd = dayjs(startDate.value)[operation](amount, 'week').endOf('week');
+    newEnd = dayjs(startDate.value as any)[operation](amount, 'week').endOf('week');
     startDate.value = newStart.startOf('day').toDate();
     endDate.value = newEnd.endOf('day').toDate();
     selectedItem.value = {
@@ -436,8 +446,8 @@ function adjustDateRange(direction) {
   }
   // otherwise adjust by the same number of days as currently selected
   else {
-    const currentStart = dayjs(startDate.value);
-    const currentEnd = dayjs(endDate.value);
+    const currentStart = dayjs(startDate.value as any);
+    const currentEnd = dayjs(endDate.value as any);
     const diffDays = currentEnd.diff(currentStart, 'day');
     const daysToMove = diffDays + 1;
 
@@ -468,18 +478,18 @@ function increment() {
 }
 
 const canIncrement = computed(() => {
-  if (!startDate.value || !endDate.value || !max.value) return true;
+  if (!startDate.value || !endDate.value || !max?.value) return true;
 
   const maxObj = dayjs(max.value);
   let nextEnd;
 
   if (selectedItem.value?.monthRange) {
-    nextEnd = dayjs(startDate.value).add(1, 'month').endOf('month');
+    nextEnd = dayjs(startDate.value as any).add(1, 'month').endOf('month');
   } else if (selectedItem.value?.weekRange) {
-    nextEnd = dayjs(startDate.value).add(1, 'week').endOf('week');
+    nextEnd = dayjs(startDate.value as any).add(1, 'week').endOf('week');
   } else {
-    const currentStart = dayjs(startDate.value);
-    const currentEnd = dayjs(endDate.value);
+    const currentStart = dayjs(startDate.value as any);
+    const currentEnd = dayjs(endDate.value as any);
     const diffDays = currentEnd.diff(currentStart, 'day');
     const daysToMove = diffDays + 1;
     nextEnd = currentEnd.add(daysToMove, 'day');
@@ -490,18 +500,18 @@ const canIncrement = computed(() => {
 });
 
 const canDecrement = computed(() => {
-  if (!startDate.value || !endDate.value || !min.value) return true;
+  if (!startDate.value || !endDate.value || !min?.value) return true;
 
   const minObj = dayjs(min.value);
   let prevStart;
 
   if (selectedItem.value?.monthRange) {
-    prevStart = dayjs(startDate.value).subtract(1, 'month').startOf('month');
+    prevStart = dayjs(startDate.value as any).subtract(1, 'month').startOf('month');
   } else if (selectedItem.value?.weekRange) {
-    prevStart = dayjs(startDate.value).subtract(1, 'week').startOf('week');
+    prevStart = dayjs(startDate.value as any).subtract(1, 'week').startOf('week');
   } else {
-    const currentStart = dayjs(startDate.value);
-    const currentEnd = dayjs(endDate.value);
+    const currentStart = dayjs(startDate.value as any);
+    const currentEnd = dayjs(endDate.value as any);
     const diffDays = currentEnd.diff(currentStart, 'day');
     const daysToMove = diffDays + 1;
     prevStart = currentStart.subtract(daysToMove, 'day');
