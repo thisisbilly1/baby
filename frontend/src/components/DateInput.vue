@@ -595,28 +595,3 @@ const canDecrement = computed(() => {
   align-items: center;
 }
 </style>
-
-<i18n>
-{
-  "en": {
-    "Yesterday": "Yesterday",
-    "Today": "Today",
-    "Tomorrow": "Tomorrow",
-    "WTD": "Week to Date",
-    "MTD": "Month to Date",
-    "Custom": "Custom",
-    "Cancel": "Cancel",
-    "OK": "OK"
-  },
-  "es": {
-    "Yesterday": "Ayer",
-    "Today": "Hoy",
-    "Tomorrow": "Mañana",
-    "WTD": "Semana hasta hoy",
-    "MTD": "Mes hasta hoy",
-    "Custom": "Personalizado",
-    "Cancel": "Cancelar",
-    "OK": "Aceptar"
-  }
-}
-</i18n>

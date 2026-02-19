@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { updateDiaper, updateFeeding, deleteDiaper, deleteFeeding, type Diaper, type Feeding } from '../api';
+import { ref, computed, watch, onMounted } from 'vue';
+import { getDiapers, getFeedings, updateDiaper, updateFeeding, deleteDiaper, deleteFeeding, type Diaper, type Feeding } from '../api';
 import { formatTime, formatDuration } from '../helpers/time';
+import DateInput from './DateInput.vue';
+import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
-interface Props {
-  diapers: Diaper[];
-  feedings: Feeding[];
-  loading: boolean;
-}
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
-const props = defineProps<Props>();
-
-const emit = defineEmits<{
-  updated: [];
-}>();
+const diapers = ref<Diaper[]>([]);
+const feedings = ref<Feeding[]>([]);
+const loading = ref(false);
 
 const showEditModal = ref(false);
 const editingEvent = ref<{ type: 'diaper' | 'feeding', data: any } | null>(null);
@@ -21,6 +20,38 @@ const showDeleteConfirm = ref(false);
 const deleteTarget = ref<{ type: 'diaper' | 'feeding', id: number } | null>(null);
 const showAlert = ref(false);
 const alertMessage = ref('');
+
+// Date filtering
+const startDate = ref<Date>(dayjs().subtract(7, 'day').toDate());
+const endDate = ref<Date>(dayjs().toDate());
+const selectedDateKey = ref('last7');
+
+// Load data with date range
+async function loadData() {
+  loading.value = true;
+  try {
+    const startISO = dayjs(startDate.value).startOf('day').toISOString();
+    const endISO = dayjs(endDate.value).endOf('day').toISOString();
+    
+    [diapers.value, feedings.value] = await Promise.all([
+      getDiapers(startISO, endISO),
+      getFeedings(startISO, endISO)
+    ]);
+  } catch (error) {
+    console.error('Failed to load data:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Watch for date changes and reload
+watch([startDate, endDate], () => {
+  loadData();
+});
+
+onMounted(() => {
+  loadData();
+});
 
 // Edit actions
 function startEdit(type: 'diaper' | 'feeding', data: any) {
@@ -67,7 +98,7 @@ async function saveEdit() {
     
     showEditModal.value = false;
     editingEvent.value = null;
-    emit('updated');
+    await loadData();
   } catch (error) {
     console.error('Failed to update:', error);
     alertMessage.value = 'Failed to update record. Please try again.';
@@ -97,7 +128,7 @@ async function handleDelete() {
     }
     showDeleteConfirm.value = false;
     deleteTarget.value = null;
-    emit('updated');
+    await loadData();
   } catch (error) {
     console.error(`Failed to delete ${deleteTarget.value?.type}:`, error);
     alertMessage.value = `Failed to delete ${deleteTarget.value?.type}. Please try again.`;
@@ -108,13 +139,13 @@ async function handleDelete() {
 // Combined events for timeline
 const allEvents = computed(() => {
   const events = [
-    ...props.diapers.map(d => ({
+    ...diapers.value.map(d => ({
       id: `diaper-${d.id}`,
       type: 'diaper' as const,
       timestamp: d.timestamp,
       data: d
     })),
-    ...props.feedings.map(f => ({
+    ...feedings.value.map(f => ({
       id: `feeding-${f.id}`,
       type: 'feeding' as const,
       timestamp: f.start_time,
@@ -132,6 +163,16 @@ const allEvents = computed(() => {
   <v-card elevation="8">
     <v-card-title class="text-h5">Recent Activity</v-card-title>
     <v-card-text>
+      <div class="mb-4">
+        <DateInput
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
+          v-model:selected-date-key="selectedDateKey"
+          :options="['today', 'yesterday', 'last7', 'last30']"
+          default-selected="last7"
+        />
+      </div>
+      
       <v-progress-circular 
         v-if="loading" 
         indeterminate 

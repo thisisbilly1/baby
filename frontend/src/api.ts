@@ -23,8 +23,13 @@ export async function createDiaper(type: 'pee' | 'poop' | 'both' | 'blowout'): P
   return response.json();
 }
 
-export async function getDiapers(limit = 50): Promise<Diaper[]> {
-  const response = await fetch(`${API_BASE}/diapers?limit=${limit}`);
+export async function getDiapers(startDate?: string, endDate?: string): Promise<Diaper[]> {
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  
+  const url = params.toString() ? `${API_BASE}/diapers?${params}` : `${API_BASE}/diapers`;
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch diapers');
   return response.json();
 }
@@ -60,8 +65,13 @@ export async function createFeeding(start_time: string, end_time: string): Promi
   return response.json();
 }
 
-export async function getFeedings(limit = 50): Promise<Feeding[]> {
-  const response = await fetch(`${API_BASE}/feedings?limit=${limit}`);
+export async function getFeedings(startDate?: string, endDate?: string): Promise<Feeding[]> {
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  
+  const url = params.toString() ? `${API_BASE}/feedings?${params}` : `${API_BASE}/feedings`;
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch feedings');
   return response.json();
 }

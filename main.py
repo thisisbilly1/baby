@@ -60,11 +60,25 @@ def diapers():
         }), 201
     
     else:  # GET
-        limit = request.args.get('limit', 50, type=int)
-        diapers = db.execute(
-            'SELECT * FROM diapers ORDER BY timestamp DESC LIMIT ?',
-            (limit,)
-        ).fetchall()
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        query = 'SELECT * FROM diapers'
+        params = []
+        
+        if start_date and end_date:
+            query += ' WHERE timestamp >= ? AND timestamp <= ?'
+            params.extend([start_date, end_date])
+        elif start_date:
+            query += ' WHERE timestamp >= ?'
+            params.append(start_date)
+        elif end_date:
+            query += ' WHERE timestamp <= ?'
+            params.append(end_date)
+        
+        query += ' ORDER BY timestamp DESC'
+        
+        diapers = db.execute(query, params).fetchall()
         
         return jsonify([dict(row) for row in diapers])
 
@@ -140,11 +154,25 @@ def feedings():
         }), 201
     
     else:  # GET
-        limit = request.args.get('limit', 50, type=int)
-        feedings = db.execute(
-            'SELECT * FROM feedings ORDER BY start_time DESC LIMIT ?',
-            (limit,)
-        ).fetchall()
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        query = 'SELECT * FROM feedings'
+        params = []
+        
+        if start_date and end_date:
+            query += ' WHERE start_time >= ? AND start_time <= ?'
+            params.extend([start_date, end_date])
+        elif start_date:
+            query += ' WHERE start_time >= ?'
+            params.append(start_date)
+        elif end_date:
+            query += ' WHERE start_time <= ?'
+            params.append(end_date)
+        
+        query += ' ORDER BY start_time DESC'
+        
+        feedings = db.execute(query, params).fetchall()
         
         return jsonify([dict(row) for row in feedings])
 

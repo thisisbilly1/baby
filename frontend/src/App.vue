@@ -232,12 +232,7 @@ onMounted(() => {
             Back
           </v-btn>
           
-          <Recent 
-            :diapers="diapers"
-            :feedings="feedings"
-            :loading="loading"
-            @updated="loadData"
-          />
+          <Recent />
         </div>
       </v-container>
     </v-main>
