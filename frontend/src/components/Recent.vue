@@ -17,6 +17,10 @@ const emit = defineEmits<{
 
 const showEditModal = ref(false);
 const editingEvent = ref<{ type: 'diaper' | 'feeding', data: any } | null>(null);
+const showDeleteConfirm = ref(false);
+const deleteTarget = ref<{ type: 'diaper' | 'feeding', id: number } | null>(null);
+const showAlert = ref(false);
+const alertMessage = ref('');
 
 // Edit actions
 function startEdit(type: 'diaper' | 'feeding', data: any) {
@@ -66,7 +70,8 @@ async function saveEdit() {
     emit('updated');
   } catch (error) {
     console.error('Failed to update:', error);
-    alert('Failed to update record');
+    alertMessage.value = 'Failed to update record. Please try again.';
+    showAlert.value = true;
   }
 }
 
@@ -76,18 +81,27 @@ function cancelEdit() {
 }
 
 // Delete actions
-async function handleDelete(type: 'diaper' | 'feeding', id: number) {
-  if (confirm(`Delete this ${type} record?`)) {
-    try {
-      if (type === 'diaper') {
-        await deleteDiaper(id);
-      } else {
-        await deleteFeeding(id);
-      }
-      emit('updated');
-    } catch (error) {
-      console.error(`Failed to delete ${type}:`, error);
+function confirmDelete(type: 'diaper' | 'feeding', id: number) {
+  deleteTarget.value = { type, id };
+  showDeleteConfirm.value = true;
+}
+
+async function handleDelete() {
+  if (!deleteTarget.value) return;
+  
+  try {
+    if (deleteTarget.value.type === 'diaper') {
+      await deleteDiaper(deleteTarget.value.id);
+    } else {
+      await deleteFeeding(deleteTarget.value.id);
     }
+    showDeleteConfirm.value = false;
+    deleteTarget.value = null;
+    emit('updated');
+  } catch (error) {
+    console.error(`Failed to delete ${deleteTarget.value?.type}:`, error);
+    alertMessage.value = `Failed to delete ${deleteTarget.value?.type}. Please try again.`;
+    showAlert.value = true;
   }
 }
 
@@ -171,7 +185,7 @@ const allEvents = computed(() => {
               variant="text"
               size="small"
               color="error"
-              @click="handleDelete(event.type, event.data.id)"
+              @click="confirmDelete(event.type, event.data.id)"
             />
           </template>
         </v-list-item>
@@ -256,8 +270,40 @@ const allEvents = computed(() => {
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-btn color="success" @click="saveEdit">Save</v-btn>
           <v-btn variant="text" @click="cancelEdit">Cancel</v-btn>
+          <v-btn color="success" variant="tonal" @click="saveEdit">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Delete Confirmation Modal -->
+    <v-dialog v-model="showDeleteConfirm" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5 text-center">
+          Confirm Delete
+        </v-card-title>
+        <v-card-text class="text-center">
+          <p v-if="deleteTarget">Are you sure you want to delete this {{ deleteTarget.type }} record?</p>
+          <p class="text-caption text-grey">This action cannot be undone.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn variant="text" @click="showDeleteConfirm = false; deleteTarget = null;">Cancel</v-btn>
+          <v-btn color="error" variant="tonal" @click="handleDelete">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Alert Modal -->
+    <v-dialog v-model="showAlert" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5 text-center">
+          Error
+        </v-card-title>
+        <v-card-text class="text-center">
+          <p>{{ alertMessage }}</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" block @click="showAlert = false">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

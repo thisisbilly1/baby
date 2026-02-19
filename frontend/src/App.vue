@@ -10,6 +10,8 @@ const loading = ref(false);
 const feedingStart = ref<Date | null>(null);
 const showDiaperModal = ref(false);
 const showFeedingModal = ref(false);
+const showAlert = ref(false);
+const alertMessage = ref('');
 
 const FEEDING_STORAGE_KEY = 'baby-tracker-feeding-in-progress';
 
@@ -23,7 +25,8 @@ async function loadData() {
     ]);
   } catch (error) {
     console.error('Failed to load data:', error);
-    alert('Failed to load data. Make sure the server is running.');
+    alertMessage.value = 'Failed to load data. Make sure the server is running.';
+    showAlert.value = true;
   } finally {
     loading.value = false;
   }
@@ -46,7 +49,8 @@ async function recordDiaper(type: 'pee' | 'poop' | 'both' | 'blowout') {
     showDiaperModal.value = false;
   } catch (error) {
     console.error('Failed to record diaper:', error);
-    alert('Failed to record diaper');
+    alertMessage.value = 'Failed to record diaper. Please try again.';
+    showAlert.value = true;
   }
 }
 
@@ -72,7 +76,8 @@ async function endFeeding() {
     await loadData();
   } catch (error) {
     console.error('Failed to record feeding:', error);
-    alert('Failed to record feeding');
+    alertMessage.value = 'Failed to record feeding. Please try again.';
+    showAlert.value = true;
   }
 }
 
@@ -210,6 +215,21 @@ onMounted(() => {
         />
       </v-container>
     </v-main>
+
+    <!-- Alert Modal -->
+    <v-dialog v-model="showAlert" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5 text-center">
+          Notice
+        </v-card-title>
+        <v-card-text class="text-center">
+          <p>{{ alertMessage }}</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" block @click="showAlert = false">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
