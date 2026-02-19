@@ -100,7 +100,7 @@ def diaper_detail(diaper_id):
         
         params.append(diaper_id)
         db.execute(
-            f'UPDATE diapers SET {', '.join(updates)} WHERE id = ?',
+            f"UPDATE diapers SET {', '.join(updates)} WHERE id = ?",
             params
         )
         db.commit()
@@ -177,7 +177,7 @@ def feeding_detail(feeding_id):
         
         params.append(feeding_id)
         db.execute(
-            f'UPDATE feedings SET {', '.join(updates)} WHERE id = ?',
+            f"UPDATE feedings SET {', '.join(updates)} WHERE id = ?",
             params
         )
         db.commit()
