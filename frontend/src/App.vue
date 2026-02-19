@@ -182,7 +182,7 @@ onMounted(() => {
           <v-card>
             <v-card-title class="text-h5 text-center">Feeding in Progress</v-card-title>
             <v-card-text>
-              <p class="text-center text-body-1 mb-4">
+              <p class="text-center text-body-1 mb-4" v-if="feedingStart">
                 Started: {{ formatTime(feedingStart!.toISOString()) }}
               </p>
               <v-btn
