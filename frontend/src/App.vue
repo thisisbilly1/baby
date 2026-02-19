@@ -12,6 +12,7 @@ const showDiaperModal = ref(false);
 const showFeedingModal = ref(false);
 const showAlert = ref(false);
 const alertMessage = ref('');
+const showRecent = ref(false);
 
 const FEEDING_STORAGE_KEY = 'baby-tracker-feeding-in-progress';
 
@@ -98,7 +99,7 @@ onMounted(() => {
     <v-main class="bg-gradient">
       <v-container class="py-8" style="max-width: 600px;">
         <!-- Primary Actions -->
-        <v-row class="mb-8">
+        <v-row v-if="!showRecent" class="mb-8">
           <v-col cols="12" sm="6">
             <v-card
               elevation="8"
@@ -123,6 +124,20 @@ onMounted(() => {
               <v-card-text class="text-center pa-0">
                 <div class="text-h1 mb-4">🍼</div>
                 <div class="text-h5 font-weight-bold">Feeding</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12">
+            <v-card
+              elevation="8"
+              class="action-card pa-6"
+              hover
+              @click="showRecent = true"
+            >
+              <v-card-text class="text-center pa-0">
+                <div class="text-h3 mb-2">📋</div>
+                <div class="text-h6 font-weight-bold">View Recent Activity</div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -206,13 +221,24 @@ onMounted(() => {
           </v-card>
         </v-dialog>
 
-        <!-- Recent Events -->
-        <Recent 
-          :diapers="diapers"
-          :feedings="feedings"
-          :loading="loading"
-          @updated="loadData"
-        />
+        <!-- Recent Events Section -->
+        <div v-if="showRecent">
+          <v-btn
+            class="mb-4"
+            prepend-icon="mdi-arrow-left"
+            variant="tonal"
+            @click="showRecent = false"
+          >
+            Back
+          </v-btn>
+          
+          <Recent 
+            :diapers="diapers"
+            :feedings="feedings"
+            :loading="loading"
+            @updated="loadData"
+          />
+        </div>
       </v-container>
     </v-main>
 
