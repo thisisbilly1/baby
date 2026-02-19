@@ -68,7 +68,7 @@ def diapers():
         
         return jsonify([dict(row) for row in diapers])
 
-@app.route('/api/diapers/<int:diaper_id>', methods=['GET', 'DELETE'])
+@app.route('/api/diapers/<int:diaper_id>', methods=['GET', 'PUT', 'DELETE'])
 def diaper_detail(diaper_id):
     db = get_db()
     
@@ -76,6 +76,37 @@ def diaper_detail(diaper_id):
         db.execute('DELETE FROM diapers WHERE id = ?', (diaper_id,))
         db.commit()
         return '', 204
+    
+    elif request.method == 'PUT':
+        data = request.json
+        diaper_type = data.get('type')
+        timestamp = data.get('timestamp')
+        
+        if diaper_type and diaper_type not in ['pee', 'poop', 'both']:
+            return jsonify({'error': 'Invalid diaper type'}), 400
+        
+        # Build update query dynamically
+        updates = []
+        params = []
+        if diaper_type:
+            updates.append('type = ?')
+            params.append(diaper_type)
+        if timestamp:
+            updates.append('timestamp = ?')
+            params.append(timestamp)
+        
+        if not updates:
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        params.append(diaper_id)
+        db.execute(
+            f'UPDATE diapers SET {', '.join(updates)} WHERE id = ?',
+            params
+        )
+        db.commit()
+        
+        diaper = db.execute('SELECT * FROM diapers WHERE id = ?', (diaper_id,)).fetchone()
+        return jsonify(dict(diaper))
     
     else:  # GET
         diaper = db.execute('SELECT * FROM diapers WHERE id = ?', (diaper_id,)).fetchone()
@@ -117,7 +148,7 @@ def feedings():
         
         return jsonify([dict(row) for row in feedings])
 
-@app.route('/api/feedings/<int:feeding_id>', methods=['GET', 'DELETE'])
+@app.route('/api/feedings/<int:feeding_id>', methods=['GET', 'PUT', 'DELETE'])
 def feeding_detail(feeding_id):
     db = get_db()
     
@@ -125,6 +156,34 @@ def feeding_detail(feeding_id):
         db.execute('DELETE FROM feedings WHERE id = ?', (feeding_id,))
         db.commit()
         return '', 204
+    
+    elif request.method == 'PUT':
+        data = request.json
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+        
+        # Build update query dynamically
+        updates = []
+        params = []
+        if start_time:
+            updates.append('start_time = ?')
+            params.append(start_time)
+        if end_time:
+            updates.append('end_time = ?')
+            params.append(end_time)
+        
+        if not updates:
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        params.append(feeding_id)
+        db.execute(
+            f'UPDATE feedings SET {', '.join(updates)} WHERE id = ?',
+            params
+        )
+        db.commit()
+        
+        feeding = db.execute('SELECT * FROM feedings WHERE id = ?', (feeding_id,)).fetchone()
+        return jsonify(dict(feeding))
     
     else:  # GET
         feeding = db.execute('SELECT * FROM feedings WHERE id = ?', (feeding_id,)).fetchone()

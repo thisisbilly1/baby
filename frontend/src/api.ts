@@ -36,6 +36,19 @@ export async function deleteDiaper(id: number): Promise<void> {
   if (!response.ok) throw new Error('Failed to delete diaper');
 }
 
+export async function updateDiaper(id: number, type: 'pee' | 'poop' | 'both', timestamp?: string): Promise<Diaper> {
+  const body: any = { type };
+  if (timestamp) body.timestamp = timestamp;
+  
+  const response = await fetch(`${API_BASE}/diapers/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error('Failed to update diaper');
+  return response.json();
+}
+
 // Feeding API
 export async function createFeeding(start_time: string, end_time: string): Promise<Feeding> {
   const response = await fetch(`${API_BASE}/feedings`, {
@@ -58,4 +71,14 @@ export async function deleteFeeding(id: number): Promise<void> {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete feeding');
+}
+
+export async function updateFeeding(id: number, start_time: string, end_time: string): Promise<Feeding> {
+  const response = await fetch(`${API_BASE}/feedings/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ start_time, end_time }),
+  });
+  if (!response.ok) throw new Error('Failed to update feeding');
+  return response.json();
 }
