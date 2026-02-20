@@ -98,7 +98,7 @@ def insert_feedings(feedings):
 
 if __name__ == '__main__':
     print("🍼 Parsing backfill data...")
-    feedings = parse_backfill_file('backfill.txt')
+    feedings = parse_backfill_file('feedings.txt')
     print(f"Found {len(feedings)} feedings\n")
     
     print("💾 Inserting into database...")
