@@ -53,19 +53,30 @@ onMounted(() => {
   loadData();
 });
 
+// Helper to convert UTC ISO string to local datetime-local format
+function toLocalDateTimeString(isoString: string): string {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 // Edit actions
 function startEdit(type: 'diaper' | 'feeding', data: any) {
   const eventData = { ...data };
   
-  // Convert ISO timestamps to datetime-local format (YYYY-MM-DDTHH:mm)
+  // Convert UTC timestamps to local datetime-local format (YYYY-MM-DDTHH:mm)
   if (type === 'diaper' && eventData.timestamp) {
-    eventData.timestamp = new Date(eventData.timestamp).toISOString().slice(0, 16);
+    eventData.timestamp = toLocalDateTimeString(eventData.timestamp);
   } else if (type === 'feeding') {
     if (eventData.start_time) {
-      eventData.start_time = new Date(eventData.start_time).toISOString().slice(0, 16);
+      eventData.start_time = toLocalDateTimeString(eventData.start_time);
     }
     if (eventData.end_time) {
-      eventData.end_time = new Date(eventData.end_time).toISOString().slice(0, 16);
+      eventData.end_time = toLocalDateTimeString(eventData.end_time);
     }
   }
   

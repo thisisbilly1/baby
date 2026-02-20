@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 app = Flask(__name__, static_folder='frontend/dist')
@@ -56,7 +56,7 @@ def diapers():
         return jsonify({
             'id': cursor.lastrowid,
             'type': diaper_type,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }), 201
     
     else:  # GET
