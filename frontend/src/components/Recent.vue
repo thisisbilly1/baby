@@ -180,7 +180,7 @@ const allEvents = computed(() => {
           v-model:end-date="endDate"
           v-model:selected-date-key="selectedDateKey"
           :options="['today', 'yesterday', 'last7', 'last30']"
-          default-selected="last7"
+          default-selected="today"
         />
       </div>
       
