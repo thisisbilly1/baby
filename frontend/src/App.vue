@@ -9,7 +9,13 @@ const feedings = ref<Feeding[]>([]);
 const loading = ref(false);
 const feedingStart = ref<Date | null>(null);
 const showDiaperModal = ref(false);
+const diaperLoading = ref(false);
+const diaperSuccess = ref(false);
+const diaperError = ref(false);
 const showFeedingModal = ref(false);
+const feedingLoading = ref(false);
+const feedingSuccess = ref(false);
+const feedingError = ref(false);
 const showAlert = ref(false);
 const alertMessage = ref('');
 const showRecent = ref(false);
@@ -45,13 +51,23 @@ function loadInProgressFeeding() {
 // Diaper actions
 async function recordDiaper(type: 'pee' | 'poop' | 'both' | 'blowout') {
   try {
+    diaperLoading.value = true;
+    diaperError.value = false;
     await createDiaper(type);
     await loadData();
-    showDiaperModal.value = false;
+    diaperLoading.value = false;
+    diaperSuccess.value = true;
+    setTimeout(() => {
+      showDiaperModal.value = false;
+      diaperSuccess.value = false;
+    }, 2000);
   } catch (error) {
     console.error('Failed to record diaper:', error);
-    alertMessage.value = 'Failed to record diaper. Please try again.';
-    showAlert.value = true;
+    diaperLoading.value = false;
+    diaperError.value = true;
+    setTimeout(() => {
+      diaperError.value = false;
+    }, 3000);
   }
 }
 
@@ -66,6 +82,8 @@ async function endFeeding() {
   if (!feedingStart.value) return;
   
   try {
+    feedingLoading.value = true;
+    feedingError.value = false;
     const endTime = new Date();
     await createFeeding(
       feedingStart.value.toISOString(),
@@ -73,12 +91,20 @@ async function endFeeding() {
     );
     feedingStart.value = null;
     localStorage.removeItem(FEEDING_STORAGE_KEY);
-    showFeedingModal.value = false;
     await loadData();
+    feedingLoading.value = false;
+    feedingSuccess.value = true;
+    setTimeout(() => {
+      showFeedingModal.value = false;
+      feedingSuccess.value = false;
+    }, 2000);
   } catch (error) {
     console.error('Failed to record feeding:', error);
-    alertMessage.value = 'Failed to record feeding. Please try again.';
-    showAlert.value = true;
+    feedingLoading.value = false;
+    feedingError.value = true;
+    setTimeout(() => {
+      feedingError.value = false;
+    }, 3000);
   }
 }
 
@@ -148,12 +174,30 @@ onMounted(() => {
           <v-card>
             <v-card-title class="text-h5 text-center">Record Diaper</v-card-title>
             <v-card-text>
-              <v-row dense>
+              <div v-if="diaperLoading" class="text-center py-8">
+                <v-progress-circular
+                  indeterminate
+                  color="primary"
+                  size="64"
+                ></v-progress-circular>
+                <div class="text-h6 mt-4">Saving...</div>
+              </div>
+              <div v-else-if="diaperSuccess" class="text-center py-8">
+                <v-icon size="80" color="success">mdi-check-circle</v-icon>
+                <div class="text-h6 mt-4">Saved!</div>
+              </div>
+              <div v-else-if="diaperError" class="text-center py-4">
+                <v-icon size="60" color="error">mdi-alert-circle</v-icon>
+                <div class="text-h6 mt-2 text-error">Failed to save</div>
+                <div class="text-caption mt-2">Please try again</div>
+              </div>
+              <v-row v-else dense>
                 <v-col cols="6">
                   <v-btn
                     block
                     size="x-large"
                     class="pee-btn"
+                    :disabled="diaperLoading"
                     @click="recordDiaper('pee')"
                   >
                     💧 Pee
@@ -164,6 +208,7 @@ onMounted(() => {
                     block
                     size="x-large"
                     class="poop-btn"
+                    :disabled="diaperLoading"
                     @click="recordDiaper('poop')"
                   >
                     💩 Poop
@@ -174,6 +219,7 @@ onMounted(() => {
                     block
                     size="x-large"
                     class="both-btn"
+                    :disabled="diaperLoading"
                     @click="recordDiaper('both')"
                   >
                     🦆 Both
@@ -184,6 +230,7 @@ onMounted(() => {
                     block
                     size="x-large"
                     class="blowout-btn"
+                    :disabled="diaperLoading"
                     @click="recordDiaper('blowout')"
                   >
                     💥 Blowout
@@ -191,7 +238,7 @@ onMounted(() => {
                 </v-col>
               </v-row>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions v-if="!diaperSuccess && !diaperLoading">
               <v-btn block variant="text" @click="showDiaperModal = false">Cancel</v-btn>
             </v-card-actions>
           </v-card>
@@ -202,20 +249,40 @@ onMounted(() => {
           <v-card>
             <v-card-title class="text-h5 text-center">Feeding in Progress</v-card-title>
             <v-card-text>
-              <p class="text-center text-body-1 mb-4" v-if="feedingStart">
-                Started: {{ formatTime(feedingStart!.toISOString()) }}
-              </p>
-              <v-btn
-                block
-                size="large"
-                class="end-btn"
-                prepend-icon="mdi-check"
-                @click="endFeeding"
-              >
-                End Feeding
-              </v-btn>
+              <div v-if="feedingLoading" class="text-center py-8">
+                <v-progress-circular
+                  indeterminate
+                  color="primary"
+                  size="64"
+                ></v-progress-circular>
+                <div class="text-h6 mt-4">Saving...</div>
+              </div>
+              <div v-else-if="feedingSuccess" class="text-center py-8">
+                <v-icon size="80" color="success">mdi-check-circle</v-icon>
+                <div class="text-h6 mt-4">Saved!</div>
+              </div>
+              <div v-else-if="feedingError" class="text-center py-4">
+                <v-icon size="60" color="error">mdi-alert-circle</v-icon>
+                <div class="text-h6 mt-2 text-error">Failed to save</div>
+                <div class="text-caption mt-2">Please try again</div>
+              </div>
+              <div v-else>
+                <p class="text-center text-body-1 mb-4" v-if="feedingStart">
+                  Started: {{ formatTime(feedingStart!.toISOString()) }}
+                </p>
+                <v-btn
+                  block
+                  size="large"
+                  class="end-btn"
+                  prepend-icon="mdi-check"
+                  :disabled="feedingLoading"
+                  @click="endFeeding"
+                >
+                  End Feeding
+                </v-btn>
+              </div>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions v-if="!feedingSuccess && !feedingLoading">
               <v-btn block variant="text" @click="cancelFeeding">Cancel</v-btn>
             </v-card-actions>
           </v-card>
