@@ -47,16 +47,17 @@ def diapers():
         if diaper_type not in ['pee', 'poop', 'both', 'blowout']:
             return jsonify({'error': 'Invalid diaper type'}), 400
         
+        timestamp = datetime.now(timezone.utc).isoformat()
         cursor = db.execute(
-            'INSERT INTO diapers (type) VALUES (?)',
-            (diaper_type,)
+            'INSERT INTO diapers (type, timestamp) VALUES (?, ?)',
+            (diaper_type, timestamp)
         )
         db.commit()
         
         return jsonify({
             'id': cursor.lastrowid,
             'type': diaper_type,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': timestamp
         }), 201
     
     else:  # GET
