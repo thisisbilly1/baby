@@ -248,6 +248,6 @@ def serve_frontend(path):
 if __name__ == '__main__':
     init_db()
     print("🍼 Baby tracker server starting...")
-    print("📊 API available at http://localhost:5000/api")
-    print("🌐 Frontend will be served at http://localhost:5000")
-    app.run(debug=True, port=5000)
+    print("📊 API available at http://localhost:5001/api")
+    print("🌐 Frontend will be served at http://localhost:5001")
+    app.run(debug=True, port=5001)
