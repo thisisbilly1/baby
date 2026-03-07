@@ -22,7 +22,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS diapers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            type TEXT NOT NULL CHECK(type IN ('pee', 'poop', 'both', 'blowout'))
+            type TEXT NOT NULL CHECK(type IN ('pee', 'poop', 'both', 'blowout', 'shart'))
         )
     ''')
     db.execute('''
@@ -44,7 +44,7 @@ def diapers():
         data = request.json
         diaper_type = data.get('type')
         
-        if diaper_type not in ['pee', 'poop', 'both', 'blowout']:
+        if diaper_type not in ['pee', 'poop', 'both', 'blowout', 'shart']:
             return jsonify({'error': 'Invalid diaper type'}), 400
         
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -97,7 +97,7 @@ def diaper_detail(diaper_id):
         diaper_type = data.get('type')
         timestamp = data.get('timestamp')
         
-        if diaper_type and diaper_type not in ['pee', 'poop', 'both', 'blowout']:
+        if diaper_type and diaper_type not in ['pee', 'poop', 'both', 'blowout', 'shart']:
             return jsonify({'error': 'Invalid diaper type'}), 400
         
         # Build update query dynamically
@@ -250,4 +250,5 @@ if __name__ == '__main__':
     print("🍼 Baby tracker server starting...")
     print("📊 API available at http://localhost:5001/api")
     print("🌐 Frontend will be served at http://localhost:5001")
-    app.run(host="0.0.0.0", port=5001)
+    # app.run(host="0.0.0.0", port=5001)
+    app.run(debug=True, port=5001)

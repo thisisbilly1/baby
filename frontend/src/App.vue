@@ -49,7 +49,7 @@ function loadInProgressFeeding() {
 }
 
 // Diaper actions
-async function recordDiaper(type: 'pee' | 'poop' | 'both' | 'blowout') {
+async function recordDiaper(type: 'pee' | 'poop' | 'both' | 'blowout' | 'shart') {
   try {
     diaperLoading.value = true;
     diaperError.value = false;
@@ -236,6 +236,17 @@ onMounted(() => {
                     💥 Blowout
                   </v-btn>
                 </v-col>
+                <v-col cols="12">
+                  <v-btn
+                    block
+                    size="x-large"
+                    class="shart-btn"
+                    :disabled="diaperLoading"
+                    @click="recordDiaper('shart')"
+                  >
+                    💨 Shart
+                  </v-btn>
+                </v-col>
               </v-row>
             </v-card-text>
             <v-card-actions v-if="!diaperSuccess && !diaperLoading">
@@ -353,6 +364,11 @@ onMounted(() => {
 
 .blowout-btn {
   background: #ff6348 !important;
+  color: white !important;
+}
+
+.shart-btn {
+  background: #f39c12 !important;
   color: white !important;
 }
 

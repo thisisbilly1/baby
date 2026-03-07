@@ -205,7 +205,7 @@ const allEvents = computed(() => {
             <v-avatar size="48" color="grey-lighten-3">
               <span class="text-h5">
                 {{ event.type === 'diaper' 
-                  ? (event.data.type === 'pee' ? '💧' : event.data.type === 'poop' ? '💩' : event.data.type === 'blowout' ? '💥' : '🦆')
+                  ? (event.data.type === 'pee' ? '💧' : event.data.type === 'poop' ? '💩' : event.data.type === 'both' ? '🦆' : event.data.type === 'shart' ? '💨' : event.data.type === 'blowout' ? '💥' : '🦆')
                   : '🍼' 
                 }}
               </span>
@@ -295,6 +295,16 @@ const allEvents = computed(() => {
                   💥 Blowout
                 </v-btn>
               </v-col>
+              <v-col cols="12">
+                <v-btn
+                  block
+                  class="shart-btn"
+                  :variant="editingEvent.data.type === 'shart' ? 'flat' : 'outlined'"
+                  @click="editingEvent.data.type = 'shart'"
+                >
+                  💨 Shart
+                </v-btn>
+              </v-col>
             </v-row>
             <v-text-field
               v-model="editingEvent.data.timestamp"
@@ -380,6 +390,11 @@ const allEvents = computed(() => {
 
 .blowout-btn {
   background: #ff6348 !important;
+  color: white !important;
+}
+
+.shart-btn {
+  background: #f39c12 !important;
   color: white !important;
 }
 </style>
